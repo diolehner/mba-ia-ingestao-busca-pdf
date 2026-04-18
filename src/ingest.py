@@ -1,4 +1,5 @@
 import os
+import time
 from pathlib import Path
 
 from dotenv import load_dotenv
@@ -10,7 +11,9 @@ from langchain_text_splitters import RecursiveCharacterTextSplitter
 
 CHUNK_SIZE = 1000
 CHUNK_OVERLAP = 150
-EMBEDDING_MODEL = "models/embedding-001"
+EMBEDDING_MODEL = "models/gemini-embedding-001"
+BATCH_SIZE = 90
+BATCH_COOLDOWN_SECONDS = 65
 
 
 def _require_env(name: str) -> str:
@@ -86,11 +89,26 @@ def ingest_pdf() -> None:
         use_jsonb=True,
     )
 
-    print("Gerando embeddings e inserindo no pgVector...")
-    store.add_documents(chunks)
+    total = len(chunks)
+    batches = (total + BATCH_SIZE - 1) // BATCH_SIZE
+    print(
+        f"Gerando embeddings e inserindo no pgVector "
+        f"({batches} lote(s) de até {BATCH_SIZE}, cooldown {BATCH_COOLDOWN_SECONDS}s)..."
+    )
+    for index in range(0, total, BATCH_SIZE):
+        batch = chunks[index : index + BATCH_SIZE]
+        batch_number = index // BATCH_SIZE + 1
+        print(f"  Lote {batch_number}/{batches} ({len(batch)} chunks)...", flush=True)
+        store.add_documents(batch)
+        if index + BATCH_SIZE < total:
+            print(
+                f"  Aguardando {BATCH_COOLDOWN_SECONDS}s para respeitar o free tier...",
+                flush=True,
+            )
+            time.sleep(BATCH_COOLDOWN_SECONDS)
 
     print(
-        f"\nIngestão concluída: {len(chunks)} chunks salvos na collection "
+        f"\nIngestão concluída: {total} chunks salvos na collection "
         f"'{collection_name}'."
     )
 

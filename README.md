@@ -4,12 +4,38 @@ Sistema de **RAG (Retrieval-Augmented Generation)** em Python que ingere um PDF,
 
 Projeto desenvolvido como desafio do MBA em IA (Full Cycle).
 
+## PDF de exemplo
+
+O repositório já vem com um `document.pdf` de demonstração: o **manual oficial do jogo de tabuleiro Scythe** (32 páginas, em inglês). Assim você pode clonar o projeto e testar o fluxo completo imediatamente, fazendo perguntas do tipo:
+
+- `How many players can play Scythe?`
+- `What is the goal of the game?`
+- `What does a player do during their turn?`
+- `Quantos jogadores podem jogar Scythe?` *(respostas em português também funcionam — a LLM traduz a partir do contexto em inglês)*
+
+Quando pedir algo fora do manual (ex.: `Qual é a capital da França?`), o sistema responderá: *"Não tenho informações necessárias para responder sua pergunta."*
+
+### Trocar o PDF por outro
+
+1. Substitua o arquivo `document.pdf` na raiz do projeto pelo seu PDF, mantendo **exatamente esse nome**.
+2. Rode novamente a ingestão:
+   ```bash
+   python src/ingest.py
+   ```
+3. O script limpa automaticamente os embeddings antigos antes de inserir os do novo PDF — não há risco de mistura de conteúdo.
+4. Rode o chat e pergunte sobre o novo documento:
+   ```bash
+   python src/chat.py
+   ```
+
+> Dica: o tempo de ingestão depende do tamanho do PDF. Para PDFs grandes (>100 chunks), o free tier do Gemini limita a 100 embeddings/minuto — o script faz batching automático com espera entre lotes.
+
 ## Stack
 
 - **Python 3.10+**
 - **LangChain** (core, community, text-splitters, google-genai, postgres)
 - **Google Gemini**
-  - Embeddings: `models/embedding-001`
+  - Embeddings: `models/gemini-embedding-001` (sucessor atual de `models/embedding-001`, que foi descontinuado)
   - LLM: `gemini-2.5-flash-lite`
 - **PostgreSQL 16 + pgVector** (via Docker)
 
@@ -76,9 +102,9 @@ O Postgres ficará disponível em `localhost:5432` com:
 - senha: `postgres`
 - banco: `rag`
 
-### 6. Colocar o PDF na raiz
+### 6. (Opcional) Trocar o PDF
 
-Coloque seu arquivo PDF na raiz do projeto com o nome **`document.pdf`**. Se quiser trocar o documento depois, basta substituir o arquivo e rodar a ingestão de novo (o script limpa a collection anterior antes de inserir).
+O repositório já contém o `document.pdf` de exemplo (manual do Scythe). Se quiser usar outro documento, veja a seção [Trocar o PDF por outro](#trocar-o-pdf-por-outro). Caso contrário, siga direto para a ingestão.
 
 ## Ordem de execução
 
